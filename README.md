@@ -5,7 +5,7 @@
 
 Konnect is the PostgreSQL connection management library of the Komrad ecosystem. It provides a typed configuration, a connection pool initializer, and a `Store` trait that all persistence layers across the stack implement. Consumed by [Korelator](https://github.com/komrad-company/Korelator) and any other Komrad component that requires database access.
 
-Konnect does not query. Konnect does not migrate. Konnect **connects**. The schema, the tables, the queries — those belong to the consumer.
+Konnect does not query. Konnect does not define schemas. Konnect **connects**. The tables, the queries, the migrations — those belong to the consumer.
 
 ```
 DatabaseConfig ──init()──► PgPool ──► AlertStore, PipelineStore, ... (defined by consumers)
@@ -62,11 +62,24 @@ pub struct AlertStore {
 }
 
 impl konnect::Store for AlertStore {
+    fn new(pool: konnect::PgPool) -> Self {
+        Self { pool }
+    }
+
     fn pool(&self) -> &konnect::PgPool {
         &self.pool
     }
+
+    async fn migrate(&self) -> Result<(), konnect::Error> {
+        sqlx::migrate!("./migrations")
+            .run(self.pool())
+            .await
+            .map_err(konnect::Error::MigrationError)
+    }
 }
 ```
+
+`migrate` embeds SQL migration files at compile time via `sqlx::migrate!()`. An invalid migration file fails the build.
 
 ### Public types
 
@@ -74,8 +87,16 @@ impl konnect::Store for AlertStore {
 |---|---|
 | `DatabaseConfig` | Full connection configuration for one service |
 | `PgPool` | Re-exported `sqlx::PgPool` — consumers need not depend on `sqlx` directly for the pool type |
-| `Store` | Trait to implement on any store struct |
-| `Error` | Fatal connection errors — the caller must handle them |
+| `Store` | Trait to implement on any store struct — enforces `new`, `pool`, and `migrate` |
+| `Error` | Connection and migration errors — the caller must handle them |
+
+### Error variants
+
+| Variant | Source |
+|---|---|
+| `ConnectionError` | `sqlx::Error` — pool creation failed |
+| `MigrationError` | `sqlx::migrate::MigrateError` — migration failed at startup |
+| `InvalidConfiguration` | Invalid configuration field — produced by the consumer |
 
 ---
 
@@ -83,10 +104,9 @@ impl konnect::Store for AlertStore {
 
 | Crate | Purpose |
 |---|---|
-| `sqlx` | Async PostgreSQL driver and connection pool |
-| `serde` + `serde_json` | JSON configuration deserialization |
+| `sqlx` | Async PostgreSQL driver, connection pool, migrations |
+| `serde` | Configuration deserialization |
 | `thiserror` | Error type derivation |
-| `tokio` | Async runtime |
 
 ---
 
