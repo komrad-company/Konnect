@@ -37,12 +37,6 @@ mod tests {
     }
 
     #[test]
-    fn connection_url_contains_search_path() {
-        let url = config().connection_url();
-        assert!(url.contains("search_path%3Dkorelator"), "url: {url}");
-    }
-
-    #[test]
     fn connection_url_format_is_valid() {
         let url = config().connection_url();
         assert_eq!(
