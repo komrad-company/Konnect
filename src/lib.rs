@@ -7,7 +7,7 @@ pub(crate) mod store;
 pub use chrono;
 pub use config::DatabaseConfig;
 pub use errors::Error;
-pub use sqlx::{PgPool, FromRow};
+pub use sqlx::{FromRow, PgPool};
 pub use store::Store;
 pub use uuid::Uuid;
 
