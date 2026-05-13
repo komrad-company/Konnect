@@ -4,12 +4,10 @@ pub(crate) mod config;
 pub(crate) mod errors;
 pub(crate) mod store;
 
-pub use chrono;
 pub use config::DatabaseConfig;
 pub use errors::Error;
-pub use sqlx::{FromRow, PgPool};
+pub use sqlx::PgPool;
 pub use store::Store;
-pub use uuid::Uuid;
 
 use sqlx::postgres::PgPoolOptions;
 
