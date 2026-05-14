@@ -13,7 +13,7 @@ use sqlx::postgres::PgPoolOptions;
 
 pub async fn init(config: &DatabaseConfig) -> Result<PgPool, Error> {
     let pool = PgPoolOptions::new()
-        .connect(&config.connection_url())
+        .connect_with(config.connect_options())
         .await?;
 
     Ok(pool)

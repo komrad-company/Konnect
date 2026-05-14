@@ -69,17 +69,8 @@ impl konnect::Store for AlertStore {
     fn pool(&self) -> &konnect::PgPool {
         &self.pool
     }
-
-    async fn migrate(&self) -> Result<(), konnect::Error> {
-        sqlx::migrate!("./migrations")
-            .run(self.pool())
-            .await
-            .map_err(konnect::Error::MigrationError)
-    }
 }
 ```
-
-`migrate` embeds SQL migration files at compile time via `sqlx::migrate!()`. An invalid migration file fails the build.
 
 ### Public types
 
@@ -87,7 +78,7 @@ impl konnect::Store for AlertStore {
 |---|---|
 | `DatabaseConfig` | Full connection configuration for one service |
 | `PgPool` | Re-exported `sqlx::PgPool` — consumers need not depend on `sqlx` directly for the pool type |
-| `Store` | Trait to implement on any store struct — enforces `new`, `pool`, and `migrate` |
+| `Store` | Trait to implement on any store struct — enforces `new` and `pool` |
 | `Error` | Connection and migration errors — the caller must handle them |
 
 ### Error variants
@@ -95,7 +86,6 @@ impl konnect::Store for AlertStore {
 | Variant | Source |
 |---|---|
 | `ConnectionError` | `sqlx::Error` — pool creation failed |
-| `MigrationError` | `sqlx::migrate::MigrateError` — migration failed at startup |
 | `InvalidConfiguration` | Invalid configuration field — produced by the consumer |
 
 ---
